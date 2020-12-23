@@ -1,18 +1,13 @@
-import express from 'express';
-import Auth from './auth';
-import redirectInsecure from './middleware/redirectInsecure';
+import Rest from './adapters/rest';
+import Logic from './logic';
+import InMemory from './repos/inMemory';
 
 const {
-  PORT = 80,
+  PORT = '80',
 } = process.env;
 
-const app = express();
+const repo = new InMemory();
+const logic = new Logic(repo);
+const rest = new Rest(logic, { port: PORT });
 
-// app.use(redirectInsecure);
-
-app.get('/', (_req, res) => res.send('Landing page'));
-app.use('/auth', Auth.router);
-
-app.listen(PORT, () => 
-  console.log(`[server]: Server started on port: ${PORT}`)
-);
+rest.start();
