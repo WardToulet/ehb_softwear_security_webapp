@@ -8,7 +8,7 @@ const {
 
 const app = express();
 
-app.use(redirectInsecure);
+// app.use(redirectInsecure);
 
 app.get('/', (_req, res) => res.send('Landing page'));
 app.use('/auth', Auth.router);
