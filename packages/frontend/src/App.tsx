@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { FC } from 'react';
 import Login from './components/auth/login';
 import Register from './components/auth/register';
 import Header from './components/layout/header';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
-function App() {
+const App: FC = () => {
   return (
-    <div className="App">
+    <Router>
       <Header/>
-      <Login></Login>
-      <Register></Register>
-    </div>
+
+      <Switch>
+        <Route path="/login"><Login/></Route>
+        <Route path="/register"><Register/></Route>
+      </Switch>
+
+    </Router>
   );
 }
 
