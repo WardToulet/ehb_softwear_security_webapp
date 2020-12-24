@@ -1,14 +1,23 @@
 import { Router, json } from 'express';
 
-import { NewAccount } from '@ss/types';
+import { NewAccount, Account } from '@ss/types';
 
 import Joi from '@hapi/joi';
 import checkSchema from '../middleware/checkSchema';
 import Logic from '../../../logic';
 
-const authRouter = (logic: Logic) => {
+import jwt from 'jsonwebtoken';
+
+const authRouter = (logic: Logic, secret: string) => {
   const router = Router();
-  router.use(json());
+
+  const createJWT = (account: Account): string => {
+    return jwt.sign({
+      sub: account.id
+    }, secret, {
+      expiresIn: '1h',
+    });
+  };
 
   // Login
   const loginRequest = Joi.object({
@@ -23,12 +32,14 @@ const authRouter = (logic: Logic) => {
   router.post('/login', json(), checkSchema(loginRequest), (req, res) => {
     try {
       const account = logic.login(req.body.email, req.body.password);
-      res.json(account);
+      res.cookie('refresh-token', createJWT(account), {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+      }).json({ email: account.email });
     } catch(err) {
       switch(err.name) {
-        case 'AccountDoesNotExist': {
-          res.status(401).json({ error: err.message });
-        } break;
+        case 'AccountDoesNotExist':
         case 'WrongCredentials': {
           res.status(401).json({ error: err.message });
         } break;
@@ -55,8 +66,14 @@ const authRouter = (logic: Logic) => {
       res.json(account);
     } catch(err) {
       switch(err.name) {
-        case 'AccountTaken': {
-          res.status(400).json({ 'error': err.message })
+        case 'AccountTaken':
+        case 'PasswordCommonlyUsed':
+        case 'PasswordInvalidCharacters':
+        case 'PasswordInsufficientLength': {
+          res.status(400).json({ error: err.message })
+        } break;
+        default: {
+          res.status(500).json({ error: err.message });
         } break;
       }
     }

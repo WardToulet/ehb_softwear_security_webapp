@@ -13,7 +13,7 @@ class InMemory implements Repo {
     // Crate account entity
     const account: Account = {
       ...newAccount,
-      id: Math.floor(Math.random() * Number.MAX_VALUE).toString(),
+      id: Math.floor(Math.random() * 100_000_000).toString(),
       activeated: false,
     }
   

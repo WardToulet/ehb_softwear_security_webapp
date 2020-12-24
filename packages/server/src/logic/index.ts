@@ -1,5 +1,9 @@
 import { NewAccount, Account } from '@ss/types';
 import { Repo } from '../service'
+import bcyrpt from 'bcrypt';
+import passwordPolicy from './passwordPolicy';
+
+const SALT_ROUNDS = 10;
 
 class Logic {
   repo: Repo;
@@ -12,10 +16,14 @@ class Logic {
    * Create a new account and persist it
    *
    * @throws AccountTaken if the email is alrady used
+   * @throws PasswordInsufficientLength if the password is to short
+   * @throws PasswordInvalidCharacters if the password contains invalid characters
+   * @throws PasswordCommonlyUsed if the password appears in a list of common passwords
    * @returns Account
    */
   registerAccount(newAccount: NewAccount): Account {
-    // TODO: salt and hash the password 
+    const password = passwordPolicy(newAccount.password);
+    newAccount.password = bcyrpt.hashSync(password, SALT_ROUNDS);
     return this.repo.createAccount(newAccount);
   }
 
@@ -29,7 +37,8 @@ class Logic {
   login(email: string, password: string): Account {
     // TODO: use hashing lib to compare passwords
     const account = this.repo.getAccountByEmail(email);
-    if(account.password !== password) {
+
+    if(!bcyrpt.compareSync(password, account.password)) {
       throw new WrongCredentials();
     }
 
@@ -39,7 +48,7 @@ class Logic {
 
 export class WrongCredentials extends Error {
   constructor() {
-    super('Wrong credentials');
+    super('Email and password do not match');
     this.name = 'WrongCredentials';
   }
 }

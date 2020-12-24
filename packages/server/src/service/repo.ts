@@ -47,7 +47,6 @@ export class AccountTaken extends Error {
  */
 export class AccountDoesNotExist extends Error {
   constructor(props: Object) {
-    console.log(Object.entries(props));
     super(`No account with ${Object.entries(props).map(([k, v]) => `${k}: "${v}"`).join(', ')}`);
     this.name = 'AccountDoesNotExist';
   }
