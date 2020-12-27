@@ -1,6 +1,7 @@
 import Rest from './adapters/rest';
 import Logic from './logic';
 import InMemory from './repos/inMemory';
+import HibpPasswordPolicy from './passwordPolicies/hibp';
 
 import { NewAccount } from '@ss/types';
 
@@ -11,11 +12,16 @@ const {
 
 const wardToulet: NewAccount = {
   email: 'ward@toulet.net',
-  password: 'testtest',
+  password: 'is_this_secure?NO',
 }
 
 const repo = new InMemory();
-const logic = new Logic(repo);
+const passwordPolicy = new HibpPasswordPolicy();
+
+const logic = new Logic({
+  repo,
+  passwordPolicy
+});
 
 // Seed my account for development
 logic.registerAccount(wardToulet);

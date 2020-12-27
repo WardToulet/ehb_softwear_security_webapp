@@ -32,11 +32,19 @@ const authRouter = (logic: Logic, secret: string) => {
   router.post('/login', json(), checkSchema(loginRequest), (req, res) => {
     try {
       const account = logic.login(req.body.email, req.body.password);
-      res.cookie('refresh-token', createJWT(account), {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-      }).json({ email: account.email });
+      res
+        .cookie('refresh-token', createJWT(account), {
+          httpOnly: true,
+          // TODO: enable when using https
+          // secure: true,
+          maxAge: 1000 * 60 * 60 * 12,
+        })
+        .cookie('account', JSON.stringify({
+          email: req.body.email,
+        }), {
+          maxAge: 1000 * 60 * 60 * 12,
+        })
+        .json({ email: account.email });
     } catch(err) {
       switch(err.name) {
         case 'AccountDoesNotExist':
@@ -60,21 +68,20 @@ const authRouter = (logic: Logic, secret: string) => {
       .required(),
   });
 
-  router.post('/register', json(), checkSchema(registerRequest), (req, res) => {
+  router.post('/register', json(), checkSchema(registerRequest), async (req, res) => {
     try {
-      const account = logic.registerAccount(req.body as NewAccount);
+      const account = await logic.registerAccount(req.body as NewAccount);
       res.json(account);
     } catch(err) {
       switch(err.name) {
         case 'AccountTaken':
-        case 'PasswordCommonlyUsed':
-        case 'PasswordInvalidCharacters':
-        case 'PasswordInsufficientLength': {
+        case 'PasswordError':
           res.status(400).json({ error: err.message })
-        } break;
-        default: {
+          break;
+
+        default:
           res.status(500).json({ error: err.message });
-        } break;
+          break;
       }
     }
   });

@@ -27,7 +27,10 @@ class Rest extends Adapter {
     this.app = express();
 
     // TODO: remove temporary cors
-    this.app.use(cors());
+    this.app.use(cors({
+      origin: 'http://localhost:3000',
+      credentials: true,
+    }));
 
     // TODO: not working on heroku
     // this.app.use(redirectInsecure);

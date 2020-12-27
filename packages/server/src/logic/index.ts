@@ -1,15 +1,20 @@
 import { NewAccount, Account } from '@ss/types';
 import { Repo } from '../service'
 import bcyrpt from 'bcrypt';
-import passwordPolicy from './passwordPolicy';
+import PasswordPolicy from '../service/passwordPolicy';
 
 const SALT_ROUNDS = 10;
 
-class Logic {
-  repo: Repo;
+type LogicProps = {
+  repo: Repo,
+  passwordPolicy: PasswordPolicy,  
+}
 
-  constructor(repo: Repo) {
-    this.repo = repo;
+class Logic {
+  props: LogicProps;
+
+  constructor(props: LogicProps) {
+    this.props = props;
   }
 
   /**
@@ -21,22 +26,26 @@ class Logic {
    * @throws PasswordCommonlyUsed if the password appears in a list of common passwords
    * @returns Account
    */
-  registerAccount(newAccount: NewAccount): Account {
-    const password = passwordPolicy(newAccount.password);
-    newAccount.password = bcyrpt.hashSync(password, SALT_ROUNDS);
-    return this.repo.createAccount(newAccount);
+  async registerAccount(newAccount: NewAccount): Promise<Account> {
+    try {
+      const password = await this.props.passwordPolicy.checkPassword(newAccount.password);
+      const hashed = await bcyrpt.hash(password, SALT_ROUNDS);
+
+      newAccount.password = hashed;
+      return this.props.repo.createAccount(newAccount);
+    } catch(e) {
+      return Promise.reject(e);
+    }
   }
 
   /**
    * Returns the account if the email and passwords are valid
-   *
    * @returns Account
    * @throws AccountDoesNotExist if no account with this email exists
    * @throws WrongCredentials if the password does not match
    */
   login(email: string, password: string): Account {
-    // TODO: use hashing lib to compare passwords
-    const account = this.repo.getAccountByEmail(email);
+    const account = this.props.repo.getAccountByEmail(email);
 
     if(!bcyrpt.compareSync(password, account.password)) {
       throw new WrongCredentials();
