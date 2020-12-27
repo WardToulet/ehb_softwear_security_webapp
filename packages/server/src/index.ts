@@ -2,6 +2,7 @@ import Rest from './adapters/rest';
 import Logic from './logic';
 import InMemory from './repos/inMemory';
 import HibpPasswordPolicy from './passwordPolicies/hibp';
+import InMemoryLoginWaitlist from './loginWaitList/inMemory';
 
 import { NewAccount } from '@ss/types';
 
@@ -17,10 +18,12 @@ const wardToulet: NewAccount = {
 
 const repo = new InMemory();
 const passwordPolicy = new HibpPasswordPolicy();
+const loginWaitList = new InMemoryLoginWaitlist();
 
 const logic = new Logic({
   repo,
-  passwordPolicy
+  passwordPolicy,
+  loginWaitList,
 });
 
 // Seed my account for development

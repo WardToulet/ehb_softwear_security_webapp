@@ -2,12 +2,14 @@ import { NewAccount, Account } from '@ss/types';
 import { Repo } from '../service'
 import bcyrpt from 'bcrypt';
 import PasswordPolicy from '../service/passwordPolicy';
+import LoginWaitList from '../service/loginWaitList';
 
 const SALT_ROUNDS = 10;
 
 type LogicProps = {
   repo: Repo,
   passwordPolicy: PasswordPolicy,  
+  loginWaitList: LoginWaitList,
 }
 
 class Logic {
@@ -45,13 +47,16 @@ class Logic {
    * @throws WrongCredentials if the password does not match
    */
   login(email: string, password: string): Account {
-    const account = this.props.repo.getAccountByEmail(email);
+    let account = this.props.repo.getAccountByEmail(email);
+    account = this.props.loginWaitList.check(account);
 
     if(!bcyrpt.compareSync(password, account.password)) {
+      this.props.loginWaitList.add(account);
       throw new WrongCredentials();
     }
 
     return account;
+
   }
 }
 

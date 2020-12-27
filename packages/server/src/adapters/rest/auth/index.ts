@@ -76,6 +76,7 @@ const authRouter = (logic: Logic, secret: string) => {
       switch(err.name) {
         case 'AccountTaken':
         case 'PasswordError':
+        case 'AccountTimedOut':
           res.status(400).json({ error: err.message })
           break;
 
